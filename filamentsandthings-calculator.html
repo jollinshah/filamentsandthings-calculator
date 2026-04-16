@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filamentsandthings · Print Cost Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141418;
+    --surface2: #1c1c22;
+    --border: #2a2a35;
+    --accent: #ff6b2b;
+    --accent2: #ffb347;
+    --text: #f0ede8;
+    --muted: #6b6878;
+    --green: #3ddc84;
+    --red: #ff4d6d;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #1a0a00 0%, #0d0d0f 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(255,107,43,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  .logo {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  header h1 {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Layout */
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 20px 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Form elements */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 5px;
+    font-family: 'Space Mono', monospace;
+  }
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+  select option { background: var(--surface2); }
+
+  /* Input with unit */
+  .input-unit {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-unit input { padding-right: 42px; }
+  .unit {
+    position: absolute;
+    right: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    pointer-events: none;
+  }
+
+  /* Filament section */
+  .filament-count-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .filament-count-row label { margin: 0; white-space: nowrap; }
+  .count-btns { display: flex; gap: 6px; }
+  .count-btn {
+    width: 32px; height: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .count-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .count-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .filament-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+  }
+  .filament-row.hidden { display: none; }
+  .spool-num {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent2);
+    font-weight: 700;
+    padding-bottom: 9px;
+  }
+
+  /* Toggle row */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .toggle-label { font-size: 12px; font-family: 'Space Mono', monospace; color: var(--muted); }
+  .toggle {
+    position: relative;
+    width: 38px; height: 20px;
+    cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 20px;
+    transition: background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.2s;
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { left: 21px; }
+
+  /* Results panel */
+  .results-panel {
+    background: linear-gradient(135deg, #0f1a0f, #111418);
+    border: 1px solid #2a3a2a;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 20px;
+  }
+  .results-title {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .results-title::after { content: ''; flex: 1; height: 1px; background: #2a3a2a; }
+
+  .cost-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .cost-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .cost-item-label {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .cost-item-value {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+  }
+  .cost-item-value.accent { color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .total-cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .total-cost-row .label {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+  .total-cost-row .value {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+  .total-cost-row .value.green { color: var(--green); }
+  .total-cost-row .value.accent { color: var(--accent); }
+  .total-cost-row .value.big {
+    font-size: 28px;
+    color: var(--green);
+  }
+
+  /* Suggested price box */
+  .price-box {
+    background: linear-gradient(135deg, rgba(61,220,132,0.08), rgba(61,220,132,0.03));
+    border: 1px solid rgba(61,220,132,0.25);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .price-box-left .eyebrow {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .price-box-left .price {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    font-family: 'Syne', sans-serif;
+  }
+  .price-box-right {
+    text-align: right;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* Calc button */
+  .calc-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .calc-btn:hover { background: #ff8c55; transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* Margin slider */
+  .slider-row { margin-bottom: 14px; }
+  .slider-row-top {
+    display: flex; justify-content: space-between; margin-bottom: 6px;
+  }
+  input[type="range"] {
+    width: 100%; accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .full-width { grid-column: 1 / -1; }
+
+  /* Tooltip note */
+  .note {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Filamentsandthings</div>
+    <h1>Print Cost <span>Calculator</span></h1>
+    <p>// Etsy pricing tool · covers every cost, every time</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="grid">
+
+    <!-- PRINT DETAILS -->
+    <div class="card">
+      <div class="card-title">Print Details</div>
+
+      <div class="field">
+        <label>Print Time (hours)</label>
+        <div class="input-unit">
+          <input type="number" id="printHours" value="4" min="0" step="0.5">
+          <span class="unit">hrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Print Time (minutes)</label>
+        <div class="input-unit">
+          <input type="number" id="printMins" value="30" min="0" max="59">
+          <span class="unit">min</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Printer Power Draw</label>
+        <div class="input-unit">
+          <input type="number" id="printerWatts" value="200" min="0">
+          <span class="unit">W</span>
+        </div>
+        <p class="note">Typical FDM: 100–350W · Check your printer specs</p>
+      </div>
+
+      <!-- Electricity Mode Toggle -->
+      <div class="toggle-row" style="margin-bottom:10px">
+        <span class="toggle-label">Use Time-of-Use (TOU) rates</span>
+        <label class="toggle">
+          <input type="checkbox" id="touToggle" onchange="toggleTOU()" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+
+      <!-- Simple rate -->
+      <div id="simpleRateSection" class="field" style="display:none">
+        <label>Electricity Rate</label>
+        <div class="input-unit">
+          <input type="number" id="electricityRate" value="0.13" step="0.001" min="0">
+          <span class="unit">$/kWh</span>
+        </div>
+      </div>
+
+      <!-- TOU section -->
+      <div id="touSection" style="display:block">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+          <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--accent2);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">PSE&G RS-TOU 3P · Three-Tier Rate</div>
+          <p class="note" style="margin-bottom:12px">Rates verified from your actual EV charging data (Apr 2026). Update if your bill shows different numbers.</p>
+
+          <!-- Three rate inputs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+            <div class="field" style="margin:0">
+              <label style="color:#ff6b6b">On-Peak ($/kWh)</label>
+              <div class="input-unit">
+                <input type="number" id="onPeakRate" value="0.26" step="0.001" min="0">
+                <span class="unit">$</span>
+              </div>
+            </div>
+            <div class="field" style="margin:0">
+              <label style="color:var(--accent2)">Mid-Peak ($/kWh)</label>
+              <div class="input-unit">
+                <input type="number" id="midPeakRate" value="0.25" step="0.001" min="0">
+                <span class="unit">$</span>
+              </div>
+            </div>
+            <div class="field" style="margin:0">
+              <label style="color:var(--green)">Off-Peak ($/kWh)</label>
+              <div class="input-unit">
+                <input type="number" id="offPeakRate" value="0.122" step="0.001" min="0">
+                <span class="unit">$</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time windows -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+            <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Rate Windows (Weekdays)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="field" style="margin:0">
+                <label style="color:#ff6b6b">On-Peak start</label>
+                <input type="time" id="onPeakStart" value="16:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+              </div>
+              <div class="field" style="margin:0">
+                <label style="color:#ff6b6b">On-Peak end</label>
+                <input type="time" id="onPeakEnd" value="21:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="field" style="margin:0">
+                <label style="color:var(--green)">Off-Peak start (overnight)</label>
+                <input type="time" id="offPeakStart" value="00:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+              </div>
+              <div class="field" style="margin:0">
+                <label style="color:var(--green)">Off-Peak end</label>
+                <input type="time" id="offPeakEnd" value="06:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+              </div>
+            </div>
+            <p class="note" style="margin-top:6px">Mid-Peak = all other hours. Weekends are always Off-Peak.</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field" style="margin:0">
+              <label>Print start time</label>
+              <input type="time" id="printStartTime" value="21:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Print day</label>
+              <select id="printDay" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none">
+                <option value="weekday">Weekday</option>
+                <option value="weekend">Weekend / Holiday</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="touBlendedDisplay" style="font-size:11px;font-family:'Space Mono',monospace;color:var(--green);padding:6px 0 2px;line-height:1.8"></div>
+      </div>
+
+      <div class="field">
+        <label>Failure / Reprint Buffer</label>
+        <div class="input-unit">
+          <input type="number" id="failureRate" value="10" min="0" max="100">
+          <span class="unit">%</span>
+        </div>
+        <p class="note">Adds a % of material + time cost for failed prints</p>
+      </div>
+    </div>
+
+    <!-- MACHINE & OVERHEAD -->
+    <div class="card">
+      <div class="card-title">Machine & Overhead</div>
+
+      <div class="field">
+        <label>Printer Purchase Cost</label>
+        <div class="input-unit">
+          <input type="number" id="printerCost" value="300" min="0">
+          <span class="unit">$</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Estimated Printer Lifespan</label>
+        <div class="input-unit">
+          <input type="number" id="printerLife" value="2000" min="1">
+          <span class="unit">hrs</span>
+        </div>
+        <p class="note">Depreciation = cost ÷ lifespan hours</p>
+      </div>
+
+      <div class="field">
+        <label>Your Labor / Post-Processing Time</label>
+        <div class="input-unit">
+          <input type="number" id="laborTime" value="0.5" step="0.25" min="0">
+          <span class="unit">hrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Hourly Labor Rate</label>
+        <div class="input-unit">
+          <input type="number" id="laborRate" value="15" min="0">
+          <span class="unit">$/hr</span>
+        </div>
+        <p class="note">Setup, slicing, support removal, packaging</p>
+      </div>
+
+      <div class="field">
+        <label>Packaging Cost per Order</label>
+        <div class="input-unit">
+          <input type="number" id="packagingCost" value="0.75" step="0.25" min="0">
+          <span class="unit">$</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILAMENT -->
+    <div class="card full-width">
+      <div class="card-title">Filament</div>
+
+      <div class="filament-count-row">
+        <label>Number of filaments used:</label>
+        <div class="count-btns">
+          <button class="count-btn" onclick="changeFilaments(-1)">−</button>
+          <span class="count-display" id="filamentCount">1</span>
+          <button class="count-btn" onclick="changeFilaments(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Spool rows 1–4 -->
+      <div id="spool1" class="filament-row">
+        <div class="spool-num">#1</div>
+        <div class="field" style="margin:0">
+          <label>Spool Cost ($)</label>
+          <div class="input-unit"><input type="number" class="spool-cost" value="22" min="0" step="0.5"><span class="unit">$</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Spool Weight (g)</label>
+          <div class="input-unit"><input type="number" class="spool-weight" value="1000" min="1"><span class="unit">g</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Grams Used</label>
+          <div class="input-unit"><input type="number" class="spool-used" value="40" min="0" step="0.5"><span class="unit">g</span></div>
+        </div>
+      </div>
+
+      <div id="spool2" class="filament-row hidden">
+        <div class="spool-num">#2</div>
+        <div class="field" style="margin:0">
+          <label>Spool Cost ($)</label>
+          <div class="input-unit"><input type="number" class="spool-cost" value="22" min="0" step="0.5"><span class="unit">$</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Spool Weight (g)</label>
+          <div class="input-unit"><input type="number" class="spool-weight" value="1000" min="1"><span class="unit">g</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Grams Used</label>
+          <div class="input-unit"><input type="number" class="spool-used" value="20" min="0" step="0.5"><span class="unit">g</span></div>
+        </div>
+      </div>
+
+      <div id="spool3" class="filament-row hidden">
+        <div class="spool-num">#3</div>
+        <div class="field" style="margin:0">
+          <label>Spool Cost ($)</label>
+          <div class="input-unit"><input type="number" class="spool-cost" value="22" min="0" step="0.5"><span class="unit">$</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Spool Weight (g)</label>
+          <div class="input-unit"><input type="number" class="spool-weight" value="1000" min="1"><span class="unit">g</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Grams Used</label>
+          <div class="input-unit"><input type="number" class="spool-used" value="20" min="0" step="0.5"><span class="unit">g</span></div>
+        </div>
+      </div>
+
+      <div id="spool4" class="filament-row hidden">
+        <div class="spool-num">#4</div>
+        <div class="field" style="margin:0">
+          <label>Spool Cost ($)</label>
+          <div class="input-unit"><input type="number" class="spool-cost" value="22" min="0" step="0.5"><span class="unit">$</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Spool Weight (g)</label>
+          <div class="input-unit"><input type="number" class="spool-weight" value="1000" min="1"><span class="unit">g</span></div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Grams Used</label>
+          <div class="input-unit"><input type="number" class="spool-used" value="20" min="0" step="0.5"><span class="unit">g</span></div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <label>Filament Purge / Waste per Color Change (%)</label>
+        <div class="input-unit">
+          <input type="number" id="purgeWaste" value="3" min="0" max="30">
+          <span class="unit">%</span>
+        </div>
+        <p class="note">Multi-color prints waste filament during transitions. Typical: 2–8%</p>
+      </div>
+    </div>
+
+    <!-- ETSY FEES -->
+    <div class="card">
+      <div class="card-title">Etsy Fees</div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Include Etsy listing fee ($0.20)</span>
+        <label class="toggle">
+          <input type="checkbox" id="listingFee" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Etsy Transaction Fee</label>
+        <div class="input-unit">
+          <input type="number" id="transactionFee" value="6.5" step="0.1" min="0">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Etsy Payment Processing Fee</label>
+        <div class="input-unit">
+          <input type="number" id="processingFee" value="3" step="0.1" min="0">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Payment Processing Fixed Fee</label>
+        <div class="input-unit">
+          <input type="number" id="processingFixed" value="0.25" step="0.05" min="0">
+          <span class="unit">$</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Shipping Cost</label>
+        <div class="input-unit">
+          <input type="number" id="shippingCost" value="4.50" step="0.25" min="0">
+          <span class="unit">$</span>
+        </div>
+        <p class="note">0 if you charge shipping separately</p>
+      </div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="card">
+      <div class="card-title">Pricing & Margin</div>
+
+      <div class="slider-row">
+        <div class="slider-row-top">
+          <label>Profit Margin</label>
+          <span id="marginDisplay" style="font-family:'Space Mono',monospace;font-size:13px;color:var(--accent)">30%</span>
+        </div>
+        <input type="range" id="marginSlider" min="0" max="80" value="30" step="5"
+          oninput="document.getElementById('marginDisplay').textContent=this.value+'%'">
+      </div>
+
+      <div class="field">
+        <label>Quantity / Units in this listing</label>
+        <div class="input-unit">
+          <input type="number" id="quantity" value="1" min="1">
+          <span class="unit">pcs</span>
+        </div>
+        <p class="note">Splits cost across multiple identical prints</p>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Selling price includes shipping</span>
+        <label class="toggle">
+          <input type="checkbox" id="shippingInPrice" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+
+      <p class="note" style="margin-top:8px">
+        Etsy transaction & processing fees apply to the total charged to the buyer including shipping. Toggle above changes whether shipping is baked into suggested price.
+      </p>
+    </div>
+
+  </div><!-- .grid -->
+
+  <button class="calc-btn" onclick="calculate()">▶ Calculate My Print Cost</button>
+
+  <!-- RESULTS -->
+  <div class="results-panel" id="results" style="display:none">
+    <div class="results-title">Cost Breakdown</div>
+
+    <div class="cost-breakdown" id="breakdownGrid"></div>
+
+    <div class="divider"></div>
+
+    <div id="totalRows"></div>
+
+    <div class="price-box" id="priceBox"></div>
+  </div>
+
+</div><!-- .container -->
+
+<script>
+let filamentCount = 1;
+
+function toggleTOU() {
+  const on = document.getElementById('touToggle').checked;
+  document.getElementById('simpleRateSection').style.display = on ? 'none' : 'block';
+  document.getElementById('touSection').style.display = on ? 'block' : 'none';
+}
+
+function calcTOURate(totalHours) {
+  function toMins(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+  const onPeakStart  = toMins(document.getElementById('onPeakStart').value);
+  const onPeakEnd    = toMins(document.getElementById('onPeakEnd').value);
+  const offPeakStart = toMins(document.getElementById('offPeakStart').value);
+  const offPeakEnd   = toMins(document.getElementById('offPeakEnd').value);
+  const startMins    = toMins(document.getElementById('printStartTime').value);
+  const isWeekend    = document.getElementById('printDay').value === 'weekend';
+  const onPeakRate   = parseFloat(document.getElementById('onPeakRate').value) || 0;
+  const midPeakRate  = parseFloat(document.getElementById('midPeakRate').value) || 0;
+  const offPeakRate  = parseFloat(document.getElementById('offPeakRate').value) || 0;
+  const totalMins    = totalHours * 60;
+
+  let onPeakMins = 0, offPeakMins = 0, midPeakMins = 0;
+  const step = 5;
+
+  for (let m = 0; m < totalMins; m += step) {
+    const chunk = Math.min(step, totalMins - m);
+    const cur = (startMins + m) % 1440;
+
+    if (isWeekend) {
+      // Weekends: everything is off-peak
+      offPeakMins += chunk;
+    } else {
+      const inOnPeak = (onPeakStart < onPeakEnd)
+        ? (cur >= onPeakStart && cur < onPeakEnd)
+        : (cur >= onPeakStart || cur < onPeakEnd);
+      const inOffPeak = (offPeakStart < offPeakEnd)
+        ? (cur >= offPeakStart && cur < offPeakEnd)
+        : (cur >= offPeakStart || cur < offPeakEnd); // handles midnight wrap
+      if (inOnPeak)       onPeakMins  += chunk;
+      else if (inOffPeak) offPeakMins += chunk;
+      else                midPeakMins += chunk;
+    }
+  }
+
+  const blended = (onPeakMins * onPeakRate + midPeakMins * midPeakRate + offPeakMins * offPeakRate) / totalMins;
+
+  const h = m => (m/60).toFixed(2);
+  document.getElementById('touBlendedDisplay').innerHTML =
+    `<span style="color:#ff6b6b">▸ ${h(onPeakMins)}h on-peak $${onPeakRate}</span> &nbsp;` +
+    `<span style="color:var(--accent2)">▸ ${h(midPeakMins)}h mid-peak $${midPeakRate}</span> &nbsp;` +
+    `<span style="color:var(--green)">▸ ${h(offPeakMins)}h off-peak $${offPeakRate}</span><br>` +
+    `<span style="color:var(--text)">→ blended rate: <strong>$${blended.toFixed(4)}/kWh</strong></span>`;
+
+  return blended;
+}
+
+function changeFilaments(delta) {
+  filamentCount = Math.max(1, Math.min(4, filamentCount + delta));
+  document.getElementById('filamentCount').textContent = filamentCount;
+  for (let i = 1; i <= 4; i++) {
+    const row = document.getElementById('spool' + i);
+    row.classList.toggle('hidden', i > filamentCount);
+  }
+}
+
+function fmt(n) {
+  return '$' + n.toFixed(2);
+}
+
+function calculate() {
+  // Print time
+  const hrs = parseFloat(document.getElementById('printHours').value) || 0;
+  const mins = parseFloat(document.getElementById('printMins').value) || 0;
+  const totalHours = hrs + mins / 60;
+
+  // Electricity
+  const watts = parseFloat(document.getElementById('printerWatts').value) || 0;
+  const touOn = document.getElementById('touToggle').checked;
+  const kwhRate = touOn ? calcTOURate(totalHours) : (parseFloat(document.getElementById('electricityRate').value) || 0);
+  const electricityCost = (watts / 1000) * totalHours * kwhRate;
+
+  // Depreciation
+  const printerCost = parseFloat(document.getElementById('printerCost').value) || 0;
+  const printerLife = parseFloat(document.getElementById('printerLife').value) || 1;
+  const depreciation = (printerCost / printerLife) * totalHours;
+
+  // Filament cost
+  let filamentCost = 0;
+  let totalGramsUsed = 0;
+  const purgeWastePct = parseFloat(document.getElementById('purgeWaste').value) || 0;
+  const spools = document.querySelectorAll('.filament-row:not(.hidden)');
+  spools.forEach((row, idx) => {
+    const cost = parseFloat(row.querySelector('.spool-cost').value) || 0;
+    const weight = parseFloat(row.querySelector('.spool-weight').value) || 1;
+    const used = parseFloat(row.querySelector('.spool-used').value) || 0;
+    const costPerGram = cost / weight;
+    // Add purge waste for spools after the first
+    const wasteMultiplier = (idx === 0) ? 1 : (1 + purgeWastePct / 100);
+    const effectiveGrams = used * wasteMultiplier;
+    filamentCost += effectiveGrams * costPerGram;
+    totalGramsUsed += effectiveGrams;
+  });
+
+  // Failure buffer
+  const failurePct = parseFloat(document.getElementById('failureRate').value) || 0;
+  const failureCost = (filamentCost + electricityCost) * (failurePct / 100);
+
+  // Labor
+  const laborTime = parseFloat(document.getElementById('laborTime').value) || 0;
+  const laborRate = parseFloat(document.getElementById('laborRate').value) || 0;
+  const laborCost = laborTime * laborRate;
+
+  // Packaging
+  const packagingCost = parseFloat(document.getElementById('packagingCost').value) || 0;
+
+  // Quantity split
+  const qty = Math.max(1, parseInt(document.getElementById('quantity').value) || 1);
+
+  // Raw cost per unit (pre-Etsy)
+  const rawCost = (electricityCost + depreciation + filamentCost + failureCost + laborCost + packagingCost) / qty;
+
+  // Shipping
+  const shippingInPrice = document.getElementById('shippingInPrice').checked;
+  const shippingCost = parseFloat(document.getElementById('shippingCost').value) || 0;
+  const shippingComponent = shippingInPrice ? shippingCost / qty : 0;
+
+  // Margin
+  const margin = parseFloat(document.getElementById('marginSlider').value) / 100;
+
+  // Pre-Etsy selling price (with margin, per unit)
+  const preEtsyPrice = rawCost / (1 - margin) + shippingComponent;
+
+  // Etsy fees on that price
+  const hasListingFee = document.getElementById('listingFee').checked;
+  const listingFeeAmt = hasListingFee ? 0.20 / qty : 0;
+  const transactionPct = parseFloat(document.getElementById('transactionFee').value) / 100;
+  const processingPct = parseFloat(document.getElementById('processingFee').value) / 100;
+  const processingFixed = parseFloat(document.getElementById('processingFixed').value) || 0;
+
+  // We need to solve for final price P such that after Etsy fees we keep what we need
+  // Etsy fees: listing (fixed) + transaction% * P + processing% * P + processing fixed
+  // Let F = (transactionPct + processingPct), G = listingFeeAmt + processingFixed/qty
+  // We want: P - F*P - G = preEtsyPrice → P*(1-F) = preEtsyPrice + G → P = (preEtsyPrice + G)/(1-F)
+  const F = transactionPct + processingPct;
+  const G = listingFeeAmt + processingFixed / qty;
+  const suggestedPrice = (preEtsyPrice + G) / (1 - F);
+
+  const etsyFeesTotal = suggestedPrice * F + G;
+  const yourProfit = suggestedPrice - rawCost - etsyFeesTotal - shippingComponent;
+
+  // ---- Render ----
+  const breakdown = [
+    { label: 'Filament', value: filamentCost / qty },
+    { label: 'Electricity', value: electricityCost / qty },
+    { label: 'Depreciation', value: depreciation / qty },
+    { label: 'Failure Buffer', value: failureCost / qty },
+    { label: 'Labor', value: laborCost / qty },
+    { label: 'Packaging', value: packagingCost / qty },
+  ];
+  if (shippingComponent > 0) breakdown.push({ label: 'Shipping', value: shippingComponent });
+
+  const grid = document.getElementById('breakdownGrid');
+  grid.innerHTML = breakdown.map(b => `
+    <div class="cost-item">
+      <div class="cost-item-label">${b.label}</div>
+      <div class="cost-item-value">${fmt(b.value)}</div>
+    </div>
+  `).join('') + `
+    <div class="cost-item">
+      <div class="cost-item-label">Etsy Fees</div>
+      <div class="cost-item-value accent">${fmt(etsyFeesTotal)}</div>
+    </div>
+  `;
+
+  const totalRows = document.getElementById('totalRows');
+  totalRows.innerHTML = `
+    <div class="total-cost-row">
+      <span class="label">Raw cost per unit</span>
+      <span class="value">${fmt(rawCost)}</span>
+    </div>
+    <div class="total-cost-row">
+      <span class="label">Etsy fees (on suggested price)</span>
+      <span class="value accent">${fmt(etsyFeesTotal)}</span>
+    </div>
+    <div class="total-cost-row">
+      <span class="label">Your profit per sale</span>
+      <span class="value green">${fmt(yourProfit)}</span>
+    </div>
+    <div class="divider"></div>
+    <div class="total-cost-row">
+      <span class="label" style="font-size:15px;color:var(--text)">Suggested Listing Price</span>
+      <span class="value big">${fmt(suggestedPrice)}</span>
+    </div>
+  `;
+
+  const marginActual = ((yourProfit / suggestedPrice) * 100).toFixed(1);
+  const priceBox = document.getElementById('priceBox');
+  priceBox.innerHTML = `
+    <div class="price-box-left">
+      <div class="eyebrow">List at</div>
+      <div class="price">${fmt(suggestedPrice)}</div>
+    </div>
+    <div class="price-box-right">
+      Print time: ${hrs}h ${Math.round(mins)}m<br>
+      Filament used: ~${totalGramsUsed.toFixed(1)}g<br>
+      Actual margin: ${marginActual}%<br>
+      Profit after fees: <span style="color:var(--green)">${fmt(yourProfit)}</span>
+    </div>
+  `;
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Auto-calc on load for preview
+window.addEventListener('load', () => setTimeout(calculate, 100));
+</script>
+</body>
+</html>
